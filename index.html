@@ -721,12 +721,26 @@ function renderToday() {
   let mealRows = Object.entries(m.meals).map(([k,meal])=>{
     const ck = today+'-'+k;
     const done = checkedMeals[ck];
-    return `<div class="check-row" data-action="meal" data-key="${ck}">
-      <div class="check-circle${done?' done':''}">${done?'✓':''}</div>
-      <div class="check-main">
-        <div class="check-title${done?' done':''}">${meal.name}</div>
-        <div class="check-detail">${meal.eyebrow} · ${meal.time} · ${meal.macros.protein}g protein</div>
+    const open = expandedMeal === k;
+    let body = '';
+    if (open) {
+      const items = meal.items.map(i=>`<div class="ingredient"><span class="dot-green">·</span>${i}</div>`).join('');
+      body = `<div class="card-body">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.12em;margin-bottom:8px">INGREDIENTS</div>
+        ${items}
+        ${meal.note?`<div style="margin-top:10px;padding:8px 12px;background:rgba(245,158,11,0.08);border-radius:8px;font-size:12px;color:#fbbf24;line-height:1.5">⚡ ${meal.note}</div>`:''}
+      </div>`;
+    }
+    return `<div style="border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:11px;padding:11px 15px;cursor:pointer" data-action="toggleMeal" data-meal="${k}">
+        <div class="check-circle${done?' done':''}" data-action="meal" data-key="${ck}" style="flex-shrink:0">${done?'✓':''}</div>
+        <div class="check-main" style="pointer-events:none">
+          <div class="check-title${done?' done':''}">${meal.name}</div>
+          <div class="check-detail">${meal.eyebrow} · ${meal.time} · ${meal.macros.protein}g protein</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);pointer-events:none">${open?'▲':'▼'}</div>
       </div>
+      ${body}
     </div>`;
   }).join('');
 
@@ -934,33 +948,38 @@ function renderWeek() {
 
 // ─── EVENT DELEGATION ─────────────────────────────────────────────────────────
 function attachHandlers() {
-  document.getElementById('scroll').addEventListener('click', function(e) {
-    const el = e.target.closest('[data-action]');
-    if (!el) return;
-    const action = el.dataset.action;
-
-    if (action === 'meal') {
-      checkedMeals[el.dataset.key] = !checkedMeals[el.dataset.key];
-      save(); render();
-    } else if (action === 'ex') {
-      checkedEx[el.dataset.key] = !checkedEx[el.dataset.key];
-      save(); render();
-    } else if (action === 'shop') {
-      checkedShop[el.dataset.key] = !checkedShop[el.dataset.key];
-      save(); render();
-    } else if (action === 'toggleMeal') {
-      expandedMeal = expandedMeal === el.dataset.meal ? null : el.dataset.meal;
-      render();
-    } else if (action === 'dayM' || action === 'dayW') {
-      selectedDay = el.dataset.day;
-      expandedMeal = null;
-      render();
-    } else if (action === 'weekDay') {
-      selectedDay = el.dataset.day;
-      switchTab('today');
-    }
-  }, {passive:true});
+  // no-op: all clicks handled by the single persistent listener below
 }
+
+// Single persistent click handler — attached once at startup
+document.addEventListener('click', function(e) {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  // Only act on clicks inside the scroll area or nav
+  if (!document.getElementById('scroll').contains(el) && !document.getElementById('nav').contains(el)) return;
+  const action = el.dataset.action;
+
+  if (action === 'meal') {
+    checkedMeals[el.dataset.key] = !checkedMeals[el.dataset.key];
+    save(); render();
+  } else if (action === 'ex') {
+    checkedEx[el.dataset.key] = !checkedEx[el.dataset.key];
+    save(); render();
+  } else if (action === 'shop') {
+    checkedShop[el.dataset.key] = !checkedShop[el.dataset.key];
+    save(); render();
+  } else if (action === 'toggleMeal') {
+    expandedMeal = expandedMeal === el.dataset.meal ? null : el.dataset.meal;
+    render();
+  } else if (action === 'dayM' || action === 'dayW') {
+    selectedDay = el.dataset.day;
+    expandedMeal = null;
+    render();
+  } else if (action === 'weekDay') {
+    selectedDay = el.dataset.day;
+    switchTab('today');
+  }
+});
 
 // ─── TAB SWITCHING ────────────────────────────────────────────────────────────
 function switchTab(tab) {

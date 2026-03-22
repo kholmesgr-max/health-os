@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Health OS"/>
+<meta name="theme-color" content="#10b981"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<title>Kyle's Health OS</title>
+<style>
+  :root {
+    --bg:        #080d1a;
+    --bg2:       #0d1525;
+    --surface:   rgba(255,255,255,0.04);
+    --surface2:  rgba(255,255,255,0.07);
+    --green:     #10b981;
+    --green2:    #34d399;
+    --amber:     #f59e0b;
+    --amber2:    #fbbf24;
+    --red:       #ef4444;
+    --blue:      #60a5fa;
+    --text:      #e8e3d8;
+    --muted:     #6b7280;
+    --muted2:    #9ca3af;
+    --border:    rgba(255,255,255,0.07);
+    --border2:   rgba(255,255,255,0.12);
+    --serif:     'DM Serif Display', Georgia, serif;
+    --mono:      'DM Mono', monospace;
+    --sans:      'DM Sans', sans-serif;
+    --safe-top:  env(safe-area-inset-top, 0px);
+    --safe-bot:  env(safe-area-inset-bottom, 0px);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%; overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  #app {
+    display: flex; flex-direction: column;
+    height: 100vh; height: 100dvh;
+    max-width: 480px; margin: 0 auto;
+    position: relative; overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  #header {
+    padding: calc(var(--safe-top) + 14px) 18px 14px;
+    background: linear-gradient(180deg, rgba(16,185,129,0.12) 0%, transparent 100%);
+    border-bottom: 1px solid rgba(16,185,129,0.15);
+    flex-shrink: 0;
+  }
+  .header-row { display:flex; justify-content:space-between; align-items:flex-start; }
+  .header-eyebrow { font-family:var(--mono); font-size:10px; letter-spacing:0.18em; color:var(--green); text-transform:uppercase; }
+  .header-date { font-family:var(--serif); font-size:26px; color:#f0ebe0; margin-top:2px; line-height:1; }
+  .sober-badge {
+    text-align:center;
+    background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.35);
+    border-radius:14px; padding:8px 14px; flex-shrink:0;
+  }
+  .sober-num { font-family:var(--serif); font-size:30px; color:var(--green); line-height:1; }
+  .sober-label { font-family:var(--mono); font-size:9px; color:var(--green2); letter-spacing:0.1em; text-transform:uppercase; margin-top:2px; }
+
+  /* progress bars */
+  .progress-row { display:flex; gap:12px; margin-top:14px; }
+  .progress-item { flex:1; }
+  .prog-label { font-family:var(--mono); font-size:9px; color:var(--muted); margin-bottom:4px; }
+  .prog-track { height:3px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden; }
+  .prog-fill { height:100%; border-radius:4px; transition:width 0.5s cubic-bezier(.4,0,.2,1); }
+  .prog-fill.meals { background:linear-gradient(90deg,var(--green),var(--green2)); }
+  .prog-fill.workout { background:linear-gradient(90deg,var(--amber),var(--amber2)); }
+
+  /* ── NAV ── */
+  #nav {
+    display:flex; flex-shrink:0;
+    background:rgba(0,0,0,0.4); border-bottom:1px solid var(--border);
+  }
+  .nav-btn {
+    flex:1; padding:11px 2px; background:none; border:none; cursor:pointer;
+    font-family:var(--mono); font-size:10px; letter-spacing:0.06em;
+    color:var(--muted); border-bottom:2px solid transparent;
+    transition:color 0.2s, border-color 0.2s;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+  }
+  .nav-btn.active { color:var(--green); border-bottom-color:var(--green); }
+  .nav-btn.active.amber { color:var(--amber); border-bottom-color:var(--amber); }
+  .nav-btn .nav-icon { font-size:16px; line-height:1; }
+
+  /* ── SCROLL AREA ── */
+  #scroll {
+    flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    padding-bottom: calc(var(--safe-bot) + 20px);
+  }
+  #scroll::-webkit-scrollbar { display:none; }
+
+  /* ── DAY PILLS ── */
+  .day-pills {
+    display:flex; gap:6px; overflow-x:auto; padding:14px 16px 0;
+    -webkit-overflow-scrolling:touch;
+  }
+  .day-pills::-webkit-scrollbar { display:none; }
+  .day-pill {
+    flex-shrink:0; padding:6px 14px; border-radius:20px; border:1px solid var(--border2);
+    background:var(--surface); cursor:pointer;
+    font-family:var(--mono); font-size:11px; color:var(--muted2);
+    transition:all 0.2s; white-space:nowrap;
+  }
+  .day-pill.active-green { background:var(--green); border-color:var(--green); color:#000; font-weight:600; }
+  .day-pill.active-amber { background:var(--amber); border-color:var(--amber); color:#000; font-weight:600; }
+  .day-pill.today-mark { border-color:rgba(16,185,129,0.4); color:var(--green2); }
+
+  /* ── CARDS ── */
+  .card {
+    margin:10px 14px 0; border-radius:14px; overflow:hidden;
+    border:1px solid var(--border); background:var(--surface);
+  }
+  .card-header {
+    padding:13px 15px; display:flex; justify-content:space-between; align-items:center;
+    cursor:pointer;
+  }
+  .card-header:active { background:rgba(255,255,255,0.04); }
+  .card-body { padding:12px 15px; border-top:1px solid var(--border); }
+  .card-eyebrow { font-family:var(--mono); font-size:9px; letter-spacing:0.14em; color:var(--amber); text-transform:uppercase; }
+  .card-title { font-family:var(--serif); font-size:17px; color:var(--text); margin-top:2px; line-height:1.2; }
+  .card-sub { font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:2px; }
+
+  /* ── CHECKROW ── */
+  .check-row {
+    display:flex; align-items:center; gap:11px;
+    padding:11px 15px; border-bottom:1px solid var(--border);
+    cursor:pointer; transition:background 0.15s;
+  }
+  .check-row:last-child { border-bottom:none; }
+  .check-row:active { background:rgba(255,255,255,0.03); }
+  .check-circle {
+    width:22px; height:22px; border-radius:50%; flex-shrink:0;
+    border:2px solid rgba(255,255,255,0.18);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; transition:all 0.2s;
+  }
+  .check-circle.done { background:var(--green); border-color:var(--green); color:#000; font-weight:700; }
+  .check-circle.amber-done { background:var(--amber); border-color:var(--amber); color:#000; font-weight:700; }
+  .check-circle.num { background:rgba(245,158,11,0.12); border-color:rgba(245,158,11,0.3); color:var(--amber); font-family:var(--mono); font-size:10px; font-weight:600; }
+  .check-main { flex:1; }
+  .check-title { font-size:14px; font-weight:500; transition:color 0.2s, text-decoration 0.2s; }
+  .check-title.done { color:var(--muted); text-decoration:line-through; }
+  .check-detail { font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:2px; }
+  .check-note { font-size:11px; color:var(--amber); margin-top:2px; }
+
+  /* ── MACROS ── */
+  .macro-row { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+  .macro-chip {
+    padding:5px 10px; border-radius:8px; background:rgba(255,255,255,0.05);
+    text-align:center; flex:1; min-width:56px;
+  }
+  .macro-val { font-family:var(--serif); font-size:16px; }
+  .macro-lbl { font-family:var(--mono); font-size:8px; color:var(--muted); }
+
+  /* ── SECTION HEADER ── */
+  .sec-head {
+    padding:16px 16px 8px; display:flex; align-items:center; gap:10px;
+  }
+  .sec-line { flex:1; height:1px; background:rgba(255,255,255,0.07); }
+  .sec-text { font-family:var(--mono); font-size:9px; letter-spacing:0.16em; color:var(--muted); text-transform:uppercase; white-space:nowrap; }
+
+  /* ── TODAY STATS GRID ── */
+  .stats-grid {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
+    margin:10px 14px 0;
+  }
+  .stat-cell {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:10px 8px; text-align:center;
+  }
+  .stat-val { font-family:var(--serif); font-size:20px; line-height:1; }
+  .stat-lbl { font-family:var(--mono); font-size:8px; color:var(--muted); margin-top:3px; }
+  .stat-status { font-family:var(--mono); font-size:8px; margin-top:2px; }
+
+  /* ── THEME BANNER ── */
+  .theme-banner {
+    margin:10px 14px 0;
+    background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(16,185,129,0.08));
+    border:1px solid rgba(245,158,11,0.2); border-radius:14px; padding:14px 16px;
+  }
+  .theme-eyebrow { font-family:var(--mono); font-size:9px; color:var(--amber); letter-spacing:0.14em; }
+  .theme-name { font-family:var(--serif); font-size:22px; margin-top:3px; }
+  .theme-macros { font-family:var(--mono); font-size:11px; color:var(--muted2); margin-top:4px; }
+
+  /* ── WORKOUT CARD ── */
+  .workout-banner {
+    margin:10px 14px 0;
+    background:rgba(245,158,11,0.06);
+    border:1px solid rgba(245,158,11,0.18); border-radius:14px; padding:14px 16px;
+  }
+  .wk-top { display:flex; justify-content:space-between; align-items:flex-start; }
+  .wk-title { font-family:var(--serif); font-size:17px; }
+  .wk-sub { font-family:var(--mono); font-size:10px; color:var(--muted2); margin-top:3px; }
+  .intensity-badge {
+    padding:3px 10px; border-radius:20px; font-family:var(--mono); font-size:9px;
+    background:rgba(0,0,0,0.35); flex-shrink:0; margin-left:8px;
+  }
+  .wk-tip {
+    margin-top:10px; padding:9px 12px;
+    background:rgba(245,158,11,0.07); border-radius:8px;
+    font-size:12px; color:#fbbf24; line-height:1.55; font-style:italic;
+    border-top:1px solid rgba(255,255,255,0.06);
+  }
+
+  /* ── SHOPPING ── */
+  .shop-item {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 16px; border-bottom:1px solid rgba(255,255,255,0.04);
+    cursor:pointer;
+  }
+  .shop-item:active { background:rgba(255,255,255,0.03); }
+  .shop-check {
+    width:20px; height:20px; border-radius:4px; flex-shrink:0;
+    border:1px solid rgba(255,255,255,0.15);
+    background:var(--surface);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; transition:all 0.2s;
+  }
+  .shop-check.done { background:var(--green); border-color:var(--green); color:#000; font-weight:700; }
+  .shop-text { font-size:13px; color:var(--muted2); transition:all 0.2s; }
+  .shop-text.done { color:var(--muted); text-decoration:line-through; }
+
+  /* ── WEEK VIEW ── */
+  .week-row {
+    margin:8px 14px 0; padding:13px 15px; border-radius:12px;
+    border:1px solid var(--border); background:var(--surface);
+    display:flex; justify-content:space-between; align-items:center;
+    cursor:pointer; transition:background 0.15s;
+  }
+  .week-row:active { background:var(--surface2); }
+  .week-row.today { border-color:rgba(16,185,129,0.35); background:rgba(16,185,129,0.06); }
+  .week-day-name { font-family:var(--serif); font-size:15px; }
+  .week-theme { font-size:11px; color:var(--muted); margin-top:2px; }
+  .week-wk { font-family:var(--mono); font-size:11px; text-align:right; }
+  .week-dur { font-family:var(--mono); font-size:9px; color:var(--muted); }
+
+  /* ── SOBER MILESTONE ── */
+  .sober-card {
+    margin:16px 14px 0; padding:20px 16px; border-radius:14px; text-align:center;
+    background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(52,211,153,0.04));
+    border:1px solid rgba(16,185,129,0.25);
+  }
+  .sober-big { font-family:var(--serif); font-size:52px; color:var(--green); line-height:1; }
+  .sober-since { font-size:12px; color:var(--muted2); margin-top:6px; line-height:1.5; }
+  .sober-stats { display:flex; justify-content:center; gap:24px; margin-top:14px; }
+  .sober-stat-val { font-family:var(--serif); font-size:22px; color:var(--text); }
+  .sober-stat-lbl { font-family:var(--mono); font-size:9px; color:var(--muted); }
+
+  /* ── INGREDIENT LIST ── */
+  .ingredient { display:flex; align-items:flex-start; gap:8px; margin-bottom:6px; font-size:13px; color:#d1d5db; }
+  .dot-green { color:var(--green); flex-shrink:0; margin-top:1px; font-size:16px; line-height:1; }
+
+  /* ── WARMUP / COOLDOWN PILLS ── */
+  .phase-pill {
+    margin:8px 14px 0; padding:8px 13px; border-radius:8px; font-size:12px; line-height:1.4;
+  }
+  .phase-pill.warm { background:rgba(16,185,129,0.07); color:#6ee7b7; }
+  .phase-pill.cool { background:rgba(96,165,250,0.07); color:#93c5fd; }
+
+  /* animations */
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(10px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .fade-up { animation:fadeUp 0.3s ease forwards; }
+
+  /* install banner */
+  #install-banner {
+    position:fixed; bottom:0; left:0; right:0; max-width:480px; margin:0 auto;
+    background:#0d1a2e; border-top:1px solid rgba(16,185,129,0.3);
+    padding:14px 18px calc(var(--safe-bot) + 14px);
+    display:none; z-index:100; align-items:center; gap:12px;
+  }
+  #install-banner.show { display:flex; }
+  #install-btn {
+    flex:1; background:var(--green); color:#000; border:none; border-radius:10px;
+    padding:10px; font-family:var(--mono); font-size:12px; font-weight:600; cursor:pointer;
+  }
+  #install-dismiss { background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer; padding:4px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div class="header-row">
+      <div>
+        <div class="header-eyebrow">KYLE'S HEALTH OS</div>
+        <div class="header-date" id="header-date">Loading...</div>
+      </div>
+      <div class="sober-badge">
+        <div class="sober-num" id="sober-count">—</div>
+        <div class="sober-label">days sober</div>
+      </div>
+    </div>
+    <div class="progress-row">
+      <div class="progress-item">
+        <div class="prog-label" id="meal-prog-label">MEALS 0/4</div>
+        <div class="prog-track"><div class="prog-fill meals" id="meal-prog" style="width:0%"></div></div>
+      </div>
+      <div class="progress-item">
+        <div class="prog-label" id="wk-prog-label">WORKOUT 0/0</div>
+        <div class="prog-track"><div class="prog-fill workout" id="wk-prog" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="nav">
+    <button class="nav-btn active" data-tab="today" onclick="switchTab('today')">
+      <span class="nav-icon">⚡</span>TODAY
+    </button>
+    <button class="nav-btn" data-tab="meals" onclick="switchTab('meals')">
+      <span class="nav-icon">🥗</span>MEALS
+    </button>
+    <button class="nav-btn" data-tab="workout" onclick="switchTab('workout')">
+      <span class="nav-icon">💪</span>LIFT
+    </button>
+    <button class="nav-btn" data-tab="shop" onclick="switchTab('shop')">
+      <span class="nav-icon">🛒</span>SHOP
+    </button>
+    <button class="nav-btn" data-tab="week" onclick="switchTab('week')">
+      <span class="nav-icon">📅</span>WEEK
+    </button>
+  </div>
+
+  <div id="scroll"></div>
+</div>
+
+<div id="install-banner">
+  <div style="flex:1">
+    <div style="font-family:var(--mono);font-size:10px;color:var(--green);letter-spacing:0.1em">ADD TO HOME SCREEN</div>
+    <div style="font-size:13px;color:var(--muted2);margin-top:2px">Install for instant daily access</div>
+  </div>
+  <button id="install-btn" onclick="installApp()">Install App</button>
+  <button id="install-dismiss" onclick="dismissInstall()">✕</button>
+</div>
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const SOBRIETY_START = new Date('2025-10-05T00:00:00');
+
+const MEAL_PLAN = {
+  Monday: {
+    theme:'Power Start',
+    meals: {
+      breakfast:{ name:'Liver-Healing Egg Bowl', time:'~8 min', eyebrow:'BREAKFAST',
+        items:['3 scrambled eggs','1 cup baby spinach (wilted in pan)','½ avocado sliced','1 cup black coffee','Salsa on top (optional)'],
+        macros:{cal:420,protein:28,carbs:12,fat:30}, note:'Make coffee first, eggs take 4 min' },
+      lunch:{ name:'Turkey & Lentil Power Bowl', time:'~5 min (prep night before)', eyebrow:'LUNCH',
+        items:['5 oz ground turkey (pre-cooked)','½ cup cooked lentils','1 cup arugula','Cherry tomatoes','Olive oil + lemon dressing','Handful of walnuts'],
+        macros:{cal:520,protein:42,carbs:28,fat:22}, note:'Cook turkey Sunday night — grab & go' },
+      snack:{ name:'Greek Yogurt + Blueberries', time:'2 min', eyebrow:'SNACK',
+        items:['1 cup plain Greek yogurt (full fat)','½ cup blueberries','1 tbsp honey (optional)'],
+        macros:{cal:220,protein:17,carbs:22,fat:6}, note:'' },
+      dinner:{ name:'Garlic Salmon + Broccolini', time:'~20 min', eyebrow:'DINNER',
+        items:['6 oz Atlantic salmon fillet','1 bunch broccolini','3 garlic cloves minced','Olive oil, lemon, black pepper','½ cup quinoa (pre-cooked batch)'],
+        macros:{cal:580,protein:46,carbs:32,fat:26}, note:'Cook quinoa in a big batch Sunday — use all week' }
+    },
+    totals:{cal:1740,protein:133}
+  },
+  Tuesday: {
+    theme:'Steady & Strong',
+    meals:{
+      breakfast:{ name:'Steel-Cut Oats + Hard Boiled Eggs', time:'~10 min', eyebrow:'BREAKFAST',
+        items:['1 cup steel-cut oats (overnight soak)','2 hard boiled eggs (boil Sunday batch)','½ cup raspberries','1 tbsp almond butter','Black coffee'],
+        macros:{cal:480,protein:24,carbs:52,fat:18}, note:'Boil 6 eggs Sunday — use Mon–Wed' },
+      lunch:{ name:'Chicken & Chickpea Salad', time:'5 min (pre-grilled chicken)', eyebrow:'LUNCH',
+        items:['5 oz grilled chicken breast','½ cup chickpeas (canned, rinsed)','Mixed greens','Cucumber, red onion, beets (pre-sliced)','2 tbsp olive oil + apple cider vinegar'],
+        macros:{cal:490,protein:44,carbs:30,fat:18}, note:'' },
+      snack:{ name:'Cottage Cheese & Apple', time:'2 min', eyebrow:'SNACK',
+        items:['¾ cup cottage cheese (low sodium)','½ apple, sliced','Cinnamon'],
+        macros:{cal:190,protein:18,carbs:20,fat:3}, note:'' },
+      dinner:{ name:'Turkey Stir-Fry with Veggies', time:'~20 min', eyebrow:'DINNER',
+        items:['5 oz ground turkey','Broccoli florets, snap peas, bell pepper','2 garlic cloves, 1 tsp fresh ginger','1 tbsp low-sodium soy sauce','½ cup brown rice (pre-cooked)','Sesame oil drizzle'],
+        macros:{cal:540,protein:40,carbs:38,fat:20}, note:'' }
+    },
+    totals:{cal:1700,protein:126}
+  },
+  Wednesday: {
+    theme:'Midweek Reset',
+    meals:{
+      breakfast:{ name:'Green Protein Smoothie', time:'~5 min', eyebrow:'BREAKFAST',
+        items:['1 scoop vanilla protein powder','1 cup baby spinach','½ frozen banana','½ cup frozen mango','1 cup unsweetened almond milk','1 tbsp chia seeds','Ice'],
+        macros:{cal:360,protein:30,carbs:38,fat:8}, note:'Blend while coffee brews — 90 seconds total' },
+      lunch:{ name:'Sardine & Avocado Toast', time:'5 min', eyebrow:'LUNCH',
+        items:['1 can sardines in olive oil (drained)','2 slices whole grain bread','½ avocado mashed','Sliced tomato','Black pepper, lemon squeeze','1 cup low-sodium vegetable soup (side)'],
+        macros:{cal:510,protein:38,carbs:34,fat:24}, note:'Sardines = top liver food, omega-3 powerhouse' },
+      snack:{ name:'Almonds + Green Tea', time:'1 min', eyebrow:'SNACK',
+        items:['1 oz raw almonds (~23 nuts)','1 cup green tea (brewed)'],
+        macros:{cal:165,protein:6,carbs:6,fat:14}, note:'' },
+      dinner:{ name:'Baked Cod + Sweet Potato', time:'~25 min', eyebrow:'DINNER',
+        items:['6 oz cod fillet','1 medium sweet potato (microwave 6 min)','1 cup roasted Brussels sprouts','Olive oil, garlic, lemon, paprika','Side salad with olive oil dressing'],
+        macros:{cal:520,protein:44,carbs:40,fat:14}, note:'' }
+    },
+    totals:{cal:1555,protein:118}
+  },
+  Thursday: {
+    theme:'Fuel & Focus',
+    meals:{
+      breakfast:{ name:'Egg & Veggie Scramble Wrap', time:'~10 min', eyebrow:'BREAKFAST',
+        items:['3 eggs scrambled','1 whole wheat tortilla (low sodium)','Spinach, mushrooms, bell pepper (pre-chopped)','Salsa','Black coffee'],
+        macros:{cal:430,protein:26,carbs:34,fat:18}, note:'Pre-chop veggies Sunday for the whole week' },
+      lunch:{ name:'Lentil Soup + Sourdough', time:'5 min (batch from Sunday)', eyebrow:'LUNCH',
+        items:['1.5 cups lentil soup (from Sunday batch)','1 slice sourdough bread','Side: mixed greens with olive oil'],
+        macros:{cal:450,protein:24,carbs:58,fat:12}, note:'Sunday lentil soup = 6 servings — fastest lunch all week' },
+      snack:{ name:'Greek Yogurt + Walnuts', time:'2 min', eyebrow:'SNACK',
+        items:['¾ cup plain Greek yogurt','1 oz walnuts','Drizzle of honey'],
+        macros:{cal:230,protein:16,carbs:14,fat:14}, note:'' },
+      dinner:{ name:'Chicken Thighs + Roasted Beets & Kale', time:'~30 min', eyebrow:'DINNER',
+        items:['2 chicken thighs (skin removed)','1 cup roasted beets (from Sunday batch)','2 cups kale (sautéed with garlic, olive oil)','½ cup quinoa'],
+        macros:{cal:580,protein:48,carbs:34,fat:22}, note:'Beets support bile flow — roast a full tray Sunday' }
+    },
+    totals:{cal:1690,protein:114}
+  },
+  Friday: {
+    theme:'Finish Strong',
+    meals:{
+      breakfast:{ name:'Cottage Cheese Pancakes', time:'~12 min', eyebrow:'BREAKFAST',
+        items:['½ cup cottage cheese','2 eggs','¼ cup oats (blended fine)','Cinnamon, vanilla','Blueberries + small maple syrup drizzle','Black coffee'],
+        macros:{cal:390,protein:30,carbs:32,fat:12}, note:'Blend all ingredients — pour like regular pancakes' },
+      lunch:{ name:'Tuna & White Bean Bowl', time:'5 min', eyebrow:'LUNCH',
+        items:['1 can albacore tuna in water (drained)','½ cup white beans (canned, rinsed)','Cherry tomatoes, arugula, red onion','Olive oil + lemon','Capers (optional)'],
+        macros:{cal:430,protein:44,carbs:28,fat:14}, note:'' },
+      snack:{ name:'Apple & Almond Butter', time:'2 min', eyebrow:'SNACK',
+        items:['1 medium apple','2 tbsp natural almond butter'],
+        macros:{cal:230,protein:6,carbs:34,fat:10}, note:'' },
+      dinner:{ name:'Sheet Pan Chicken & Veggies', time:'~30 min (mostly oven)', eyebrow:'DINNER',
+        items:['6 oz chicken breast','Broccoli, zucchini, red onion, cherry tomatoes','Olive oil, garlic, Italian seasoning','½ cup cooked brown rice','Lemon wedge'],
+        macros:{cal:520,protein:50,carbs:36,fat:16}, note:'425°F, everything on one pan, 25 min — minimal cleanup' }
+    },
+    totals:{cal:1570,protein:130}
+  },
+  Saturday: {
+    theme:'Family Day Fuel',
+    meals:{
+      breakfast:{ name:'Weekend Egg Muffins (make for family)', time:'~30 min', eyebrow:'BREAKFAST',
+        items:['6 eggs (whisked)','Spinach, mushrooms, bell pepper, onion','½ cup part-skim mozzarella','Salt-free seasoning','12 egg muffins total — eat 3, save rest for weekdays'],
+        macros:{cal:380,protein:32,carbs:8,fat:22}, note:'Leftover muffins = fast weekday breakfasts' },
+      lunch:{ name:'Big Family Taco Bowl', time:'~20 min', eyebrow:'LUNCH',
+        items:['5 oz seasoned ground turkey','½ cup black beans','Brown rice base','½ avocado (guacamole)','Pico de gallo (no salt added)','Shredded cabbage, lime'],
+        macros:{cal:580,protein:42,carbs:52,fat:20}, note:'Kids eat theirs in tortillas — yours is a bowl' },
+      snack:{ name:'Protein Shake', time:'2 min', eyebrow:'SNACK',
+        items:['1 scoop protein powder','1 cup almond milk','1 tbsp peanut butter','Ice — shake or blend'],
+        macros:{cal:250,protein:28,carbs:10,fat:10}, note:'' },
+      dinner:{ name:'Grilled Salmon + Family Salad', time:'~20 min', eyebrow:'DINNER',
+        items:['6 oz salmon (grill or cast iron)','Big green salad: romaine, cucumber, beets, chickpeas','Olive oil + balsamic dressing','1 whole grain dinner roll','Sparkling water with lemon'],
+        macros:{cal:560,protein:44,carbs:34,fat:24}, note:'' }
+    },
+    totals:{cal:1770,protein:146}
+  },
+  Sunday: {
+    theme:'Prep Day — Set the Week',
+    meals:{
+      breakfast:{ name:'Smoked Salmon & Eggs', time:'~10 min', eyebrow:'BREAKFAST',
+        items:['3 eggs (any style)','2 oz smoked salmon (low sodium)','½ avocado','Sliced tomato, capers','1 slice whole grain toast','Black coffee or green tea'],
+        macros:{cal:460,protein:34,carbs:20,fat:26}, note:'Sundays are for a slightly slower morning' },
+      lunch:{ name:'Big Batch Lentil Soup (6 servings)', time:'~35 min', eyebrow:'LUNCH + BATCH COOK',
+        items:['2 cups dry lentils','4 cups low-sodium broth','Diced carrots, celery, onion, garlic','Canned tomatoes (no salt added)','Cumin, turmeric, black pepper, lemon juice','Eat 1.5 cups today — fridge/freeze the rest'],
+        macros:{cal:400,protein:24,carbs:56,fat:6}, note:'Turmeric = key liver anti-inflammatory' },
+      snack:{ name:'Cottage Cheese + Berries', time:'2 min', eyebrow:'SNACK',
+        items:['¾ cup cottage cheese','½ cup mixed berries','Sprinkle of hemp seeds'],
+        macros:{cal:200,protein:18,carbs:18,fat:5}, note:'' },
+      dinner:{ name:'Sunday Baked Chicken (batch cook)', time:'~35 min', eyebrow:'DINNER + BATCH COOK',
+        items:['8 chicken thighs (skin removed) — cook all','Roasted broccoli & beets (roast a full tray)','½ cup quinoa (make a full pot)','Garlic, lemon, olive oil, rosemary','Eat 2 thighs tonight — refrigerate rest for the week'],
+        macros:{cal:580,protein:50,carbs:32,fat:22}, note:'Sunday batch = fast lunches & dinners all week long' }
+    },
+    totals:{cal:1640,protein:126}
+  }
+};
+
+const WORKOUT_PLAN = {
+  Monday:{
+    type:'Upper Body Strength', location:'Crunch Fitness', duration:'45 min', intensity:'Moderate',
+    warmup:'5 min treadmill brisk walk or elliptical', cooldown:'5 min slow walk + stretching',
+    tip:'Log your weights today. Progressive overload over weeks is the entire game.',
+    exercises:[
+      {name:'Cable Row', sets:3, reps:'12', rest:'60s', note:'Mid-back focus — squeeze at peak'},
+      {name:'Chest Press Machine', sets:3, reps:'12', rest:'60s', note:'Controlled, no bouncing'},
+      {name:'Lat Pulldown', sets:3, reps:'12', rest:'60s', note:'Pull to chest, lean back slightly'},
+      {name:'Dumbbell Shoulder Press (seated)', sets:3, reps:'10', rest:'60s', note:'Start 20–25 lbs'},
+      {name:'Tricep Pushdown (cable)', sets:3, reps:'12', rest:'45s', note:''},
+      {name:'Dumbbell Bicep Curls', sets:3, reps:'12', rest:'45s', note:''},
+      {name:'Plank Hold', sets:3, reps:'30 sec', rest:'45s', note:'Core stability — breathe normally'},
+    ]
+  },
+  Tuesday:{
+    type:'Active Recovery Walk', location:'Neighborhood / Park', duration:'30–45 min', intensity:'Easy',
+    warmup:'', cooldown:'5 min stretching after walk',
+    tip:'Walking is one of the best exercises for liver health. Never skip this.',
+    exercises:[
+      {name:'Brisk Walk', sets:1, reps:'30–45 min continuous', rest:'', note:'Aim for 3.5–4 mph'},
+      {name:'Hip flexor stretch', sets:1, reps:'60 sec each side', rest:'', note:'After walk'},
+      {name:'Hamstring stretch', sets:1, reps:'60 sec each side', rest:'', note:''},
+      {name:'Calf stretch', sets:1, reps:'60 sec each side', rest:'', note:''},
+    ]
+  },
+  Wednesday:{
+    type:'Lower Body + Core', location:'Crunch Fitness', duration:'45 min', intensity:'Moderate',
+    warmup:'5 min bike or elliptical', cooldown:'5 min walk + stretching',
+    tip:'Lower body muscle is your biggest metabolic engine. This session burns fat for 48 hours after.',
+    exercises:[
+      {name:'Leg Press Machine', sets:3, reps:'12', rest:'60s', note:'Safer than barbell squat for now'},
+      {name:'Romanian Deadlift (dumbbells)', sets:3, reps:'10', rest:'60s', note:'Start 25–30 lbs, hinge at hips'},
+      {name:'Seated Leg Curl Machine', sets:3, reps:'12', rest:'60s', note:''},
+      {name:'Leg Extension Machine', sets:3, reps:'12', rest:'60s', note:''},
+      {name:'Standing Calf Raises', sets:3, reps:'15', rest:'45s', note:'Machine or dumbbell'},
+      {name:'Cable Woodchops (core rotation)', sets:3, reps:'12 each side', rest:'45s', note:''},
+      {name:'Dead Bug (floor)', sets:3, reps:'8 each side', rest:'45s', note:'Slow & controlled'},
+    ]
+  },
+  Thursday:{
+    type:'Full Rest Day', location:'Home', duration:'Recovery', intensity:'Rest',
+    warmup:'', cooldown:'',
+    tip:'Rest days are when your muscles grow. Sleep 7+ hrs tonight.',
+    exercises:[
+      {name:'Complete Rest', sets:0, reps:'', rest:'', note:'Your body is rebuilding today — let it'},
+      {name:'Optional: 10 min evening walk with the kids', sets:0, reps:'', rest:'', note:''},
+    ]
+  },
+  Friday:{
+    type:'Full Body Circuit', location:'Crunch Fitness', duration:'40 min', intensity:'Moderate–High',
+    warmup:'5 min treadmill', cooldown:'5 min stretch',
+    tip:"Friday is your weekly celebration of showing up 4 days straight. Go earn it.",
+    exercises:[
+      {name:'Goblet Squat (dumbbell)', sets:3, reps:'12', rest:'45s', note:'Hold 25–35 lb at chest'},
+      {name:'Dumbbell Row (single arm)', sets:3, reps:'12 each', rest:'45s', note:'Brace on bench'},
+      {name:'Push-Up (or incline push-up)', sets:3, reps:'10–15', rest:'45s', note:'Full body tension'},
+      {name:'Step-Ups (bench or box)', sets:3, reps:'10 each leg', rest:'45s', note:'Hold dumbbells'},
+      {name:'Face Pulls (cable)', sets:3, reps:'15', rest:'45s', note:'Shoulder health — do not skip'},
+      {name:"Farmer's Carry", sets:3, reps:'40 ft walk', rest:'60s', note:'2 heavy dumbbells, walk and back'},
+    ]
+  },
+  Saturday:{
+    type:'Cardio — Your Choice', location:'Crunch or Outdoors', duration:'30–45 min', intensity:'Moderate',
+    warmup:'', cooldown:'5 min easy pace',
+    tip:'Keep it enjoyable. This is movement for your liver, your mood, your kids.',
+    exercises:[
+      {name:'Pick ONE:', sets:0, reps:'', rest:'', note:''},
+      {name:'→ Elliptical', sets:0, reps:'30–40 min steady', rest:'', note:'RPE 5–6 out of 10'},
+      {name:'→ Stationary Bike', sets:0, reps:'30–40 min', rest:'', note:'Great for liver — low impact'},
+      {name:'→ Outdoor Bike Ride', sets:0, reps:'30–45 min', rest:'', note:'With the kids if possible'},
+      {name:'→ Swimming', sets:0, reps:'30 min', rest:'', note:'Best full-body low impact'},
+    ]
+  },
+  Sunday:{
+    type:'Rest + Meal Prep Day', location:'Home', duration:'Recovery', intensity:'Rest',
+    warmup:'', cooldown:'',
+    tip:'Sunday prep is the foundation of your whole week. 90 min now = 20 saved every weekday.',
+    exercises:[
+      {name:'No structured exercise', sets:0, reps:'', rest:'', note:'Full recovery'},
+      {name:'Meal Prep Session (see Meals tab)', sets:0, reps:'60–90 min', rest:'', note:'Chicken, quinoa, lentil soup, beets, eggs'},
+      {name:'Optional: family walk or backyard time', sets:0, reps:'', rest:'', note:''},
+    ]
+  }
+};
+
+const SHOPPING = {
+  '🥬 PRODUCE': [
+    'Baby spinach (large bag)','Arugula','Mixed greens','Kale','Romaine lettuce',
+    'Broccoli (2 heads or bag of florets)','Broccolini','Brussels sprouts (bag)',
+    'Zucchini (2)','Bell peppers (3, mixed colors)','Cherry tomatoes (2 pints)',
+    'Cucumber (2)','Red onion (2)','Yellow onion (1)','Mushrooms (1 container)',
+    'Beets — fresh or vacuum packed pre-cooked','Sweet potatoes (3)',
+    'Avocados (4–5)','Lemons (6)','Limes (2)','Apples (4)','Bananas (1 bunch)',
+    'Blueberries (2 pints)','Raspberries (1 pint)','Frozen mixed berries (bag)',
+    'Frozen mango (bag)','Garlic (1 head)','Fresh ginger (small knob)',
+    'Snap peas','Carrots (bag)','Celery (bunch)'
+  ],
+  '🥩 PROTEIN': [
+    'Atlantic salmon fillets (4–6, ~6 oz each)','Cod fillets (2–3)',
+    'Albacore tuna in water (4 cans)','Sardines in olive oil (4 cans)',
+    'Smoked salmon, low sodium (4 oz pack)',
+    'Ground turkey 93/7 lean (2 lbs)','Chicken breasts boneless skinless (4–6)',
+    'Chicken thighs skinless (8–10 for batch cook)',
+    'Eggs (2 dozen)','Cottage cheese low sodium (32 oz)',
+    'Plain Greek yogurt full fat (32 oz)',
+    'Protein powder — vanilla whey or plant-based',
+    'Part-skim mozzarella shredded (small bag)'
+  ],
+  '🥫 PANTRY': [
+    'Steel-cut oats (large canister)','Quinoa (bag)','Brown rice (bag)',
+    'Dry lentils green or brown (2 lb bag)',
+    'Chickpeas no salt added (3 cans)','White beans (2 cans)','Black beans (2 cans)',
+    'Diced tomatoes no salt added (2 cans)',
+    'Low-sodium chicken or veggie broth (32 oz x2)',
+    'Whole grain bread (loaf)','Whole wheat tortillas low sodium',
+    'Sourdough bread (loaf)','Whole grain dinner rolls',
+    'Extra virgin olive oil','Sesame oil (small bottle)',
+    'Natural almond butter','Natural peanut butter',
+    'Walnuts (bag)','Raw almonds (bag)','Hemp seeds','Chia seeds',
+    'Low-sodium soy sauce','Apple cider vinegar','Balsamic vinegar',
+    'Salsa low sodium (jar)','Capers (small jar)',
+    'Honey','Maple syrup (small bottle)',
+    'Cinnamon','Cumin','Turmeric','Paprika','Italian seasoning',
+    'Salt-free seasoning blend (Mrs. Dash or similar)'
+  ],
+  '🥛 DAIRY & DRINKS': [
+    'Unsweetened almond milk (half gallon x2)',
+    'Green tea bags (box)','Coffee (your preference)',
+    'Sparkling water unsweetened (case)',
+    'Water — aim for 80–100 oz daily'
+  ],
+  '💊 SUPPLEMENTS': [
+    'Vitamin D3 2000 IU (provider-recommended — keep taking)'
+  ]
+};
+
+const INTENSITY_COLOR = {
+  'Rest':'#6b7280', 'Easy':'#10b981', 'Moderate':'#f59e0b',
+  'Moderate–High':'#ef4444', 'High':'#dc2626'
+};
+
+// ─── STATE ─────────────────────────────────────────────────────────────────────
+let currentTab = 'today';
+let selectedDay = DAYS[new Date().getDay()];
+let checkedMeals = JSON.parse(localStorage.getItem('checkedMeals') || '{}');
+let checkedEx = JSON.parse(localStorage.getItem('checkedEx') || '{}');
+let checkedShop = JSON.parse(localStorage.getItem('checkedShop') || '{}');
+let expandedMeal = null;
+let deferredPrompt = null;
+
+function save() {
+  localStorage.setItem('checkedMeals', JSON.stringify(checkedMeals));
+  localStorage.setItem('checkedEx', JSON.stringify(checkedEx));
+  localStorage.setItem('checkedShop', JSON.stringify(checkedShop));
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function todayName() { return DAYS[new Date().getDay()]; }
+
+function daysSober() {
+  return Math.floor((new Date() - SOBRIETY_START) / 86400000);
+}
+
+function fmt(d) {
+  return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+}
+
+function countChecked(prefix, total) {
+  let n = 0;
+  for (let i = 0; i < total; i++) if (checkedMeals[prefix + i]) n++;
+  return n;
+}
+
+function updateHeader() {
+  document.getElementById('header-date').textContent = fmt(new Date());
+  document.getElementById('sober-count').textContent = daysSober();
+
+  const todayMeals = MEAL_PLAN[todayName()].meals;
+  const mealKeys = Object.keys(todayMeals);
+  let mc = 0; mealKeys.forEach(k => { if (checkedMeals[todayName()+'-'+k]) mc++; });
+  const mt = mealKeys.length;
+  document.getElementById('meal-prog-label').textContent = `MEALS ${mc}/${mt}`;
+  document.getElementById('meal-prog').style.width = (mc/mt*100)+'%';
+
+  const wk = WORKOUT_PLAN[todayName()];
+  let wc = 0;
+  wk.exercises.forEach((_, i) => { if (checkedEx[todayName()+'-'+i]) wc++; });
+  const wt = wk.exercises.length;
+  document.getElementById('wk-prog-label').textContent = `WORKOUT ${wc}/${wt}`;
+  document.getElementById('wk-prog').style.width = (wt > 0 ? wc/wt*100 : 0)+'%';
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function render() {
+  updateHeader();
+  const scroll = document.getElementById('scroll');
+  scroll.innerHTML = '';
+  scroll.scrollTop = 0;
+
+  const div = document.createElement('div');
+  div.className = 'fade-up';
+
+  if (currentTab === 'today') div.innerHTML = renderToday();
+  else if (currentTab === 'meals') div.innerHTML = renderMeals();
+  else if (currentTab === 'workout') div.innerHTML = renderWorkout();
+  else if (currentTab === 'shop') div.innerHTML = renderShop();
+  else if (currentTab === 'week') div.innerHTML = renderWeek();
+
+  scroll.appendChild(div);
+  attachHandlers();
+}
+
+// ── TODAY ──────────────────────────────────────────────────────────────────────
+function renderToday() {
+  const today = todayName();
+  const m = MEAL_PLAN[today];
+  const w = WORKOUT_PLAN[today];
+  const ic = INTENSITY_COLOR[w.intensity] || '#9ca3af';
+
+  let statsHTML = `
+    <div class="stats-grid">
+      ${[
+        {l:'Bilirubin',v:'4.6',s:'↑ High',c:'var(--red)'},
+        {l:'Albumin',v:'3.1',s:'↓ Low',c:'var(--amber)'},
+        {l:'AST',v:'50',s:'At limit',c:'var(--amber)'},
+        {l:'Glucose',v:'111',s:'↑ Watch',c:'var(--amber)'},
+        {l:'Vit D',v:'19',s:'↓ Low',c:'var(--red)'},
+        {l:'Potassium',v:'3.9',s:'✓ OK',c:'var(--green)'},
+      ].map(s=>`<div class="stat-cell">
+        <div class="stat-val" style="color:${s.c}">${s.v}</div>
+        <div class="stat-lbl">${s.l}</div>
+        <div class="stat-status" style="color:${s.c}">${s.s}</div>
+      </div>`).join('')}
+    </div>`;
+
+  let mealRows = Object.entries(m.meals).map(([k,meal])=>{
+    const ck = today+'-'+k;
+    const done = checkedMeals[ck];
+    return `<div class="check-row" data-action="meal" data-key="${ck}">
+      <div class="check-circle${done?' done':''}">${done?'✓':''}</div>
+      <div class="check-main">
+        <div class="check-title${done?' done':''}">${meal.name}</div>
+        <div class="check-detail">${meal.eyebrow} · ${meal.time} · ${meal.macros.protein}g protein</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  let exRows = w.exercises.slice(0,3).map((ex,i)=>{
+    const ck = today+'-'+i;
+    const done = checkedEx[ck];
+    return `<div class="check-row" data-action="ex" data-key="${ck}">
+      <div class="check-circle${done?' amber-done':' num'}">${done?'✓':i+1}</div>
+      <div class="check-main">
+        <div class="check-title${done?' done':''}">${ex.name}</div>
+        ${ex.sets>1?`<div class="check-detail">${ex.sets} × ${ex.reps}${ex.rest?' · rest '+ex.rest:''}</div>`:''}
+      </div>
+    </div>`;
+  }).join('') + (w.exercises.length>3?`<div style="padding:8px 15px;font-family:var(--mono);font-size:10px;color:var(--muted)">+ ${w.exercises.length-3} more exercises → Workout tab</div>`:'');
+
+  return `
+    <div style="padding-bottom:8px">
+      <div class="sec-head"><div class="sec-line"></div><div class="sec-text">LAB SNAPSHOT · FEB 2026</div><div class="sec-line"></div></div>
+      ${statsHTML}
+
+      <div class="sec-head"><div class="sec-line"></div><div class="sec-text">TODAY · ${today.toUpperCase()}</div><div class="sec-line"></div></div>
+      <div class="theme-banner">
+        <div class="theme-eyebrow">TODAY'S THEME</div>
+        <div class="theme-name">${m.theme}</div>
+        <div class="theme-macros">${m.totals.cal} kcal · ${m.totals.protein}g protein target</div>
+      </div>
+
+      <div class="sec-head"><div class="sec-line"></div><div class="sec-text">MEALS</div><div class="sec-line"></div></div>
+      <div class="card">${mealRows}</div>
+
+      <div class="sec-head"><div class="sec-line"></div><div class="sec-text">WORKOUT</div><div class="sec-line"></div></div>
+      <div class="workout-banner">
+        <div class="wk-top">
+          <div>
+            <div class="wk-title">${w.type}</div>
+            <div class="wk-sub">${w.duration} · ${w.location}</div>
+          </div>
+          <div class="intensity-badge" style="color:${ic};border:1px solid ${ic}40">${w.intensity}</div>
+        </div>
+        <div class="wk-tip">"${w.tip}"</div>
+      </div>
+      <div class="card" style="margin-top:8px">${exRows}</div>
+    </div>`;
+}
+
+// ── MEALS ──────────────────────────────────────────────────────────────────────
+function renderMeals() {
+  const m = MEAL_PLAN[selectedDay];
+  let pills = DAYS.map(d=>`<div class="day-pill${d===selectedDay?' active-green':(d===todayName()?' today-mark':'')}" data-action="dayM" data-day="${d}">${d.slice(0,3)}</div>`).join('');
+
+  let cards = Object.entries(m.meals).map(([k,meal])=>{
+    const open = expandedMeal===k;
+    let body = '';
+    if (open) {
+      const items = meal.items.map(i=>`<div class="ingredient"><span class="dot-green">·</span>${i}</div>`).join('');
+      const macroChips = [
+        {l:'Protein',v:meal.macros.protein+'g',c:'var(--green)'},
+        {l:'Carbs',v:meal.macros.carbs+'g',c:'var(--amber)'},
+        {l:'Fat',v:meal.macros.fat+'g',c:'var(--blue)'},
+        {l:'Calories',v:meal.macros.cal,c:'var(--muted2)'},
+      ].map(x=>`<div class="macro-chip"><div class="macro-val" style="color:${x.c}">${x.v}</div><div class="macro-lbl">${x.l}</div></div>`).join('');
+      body = `<div class="card-body">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.12em;margin-bottom:8px">INGREDIENTS</div>
+        ${items}
+        <div class="macro-row">${macroChips}</div>
+        ${meal.note?`<div style="margin-top:10px;padding:8px 12px;background:rgba(245,158,11,0.08);border-radius:8px;font-size:12px;color:#fbbf24;line-height:1.5">⚡ ${meal.note}</div>`:''}
+      </div>`;
+    }
+    return `<div class="card">
+      <div class="card-header" data-action="toggleMeal" data-meal="${k}">
+        <div>
+          <div class="card-eyebrow">${meal.eyebrow} · ${meal.time}</div>
+          <div class="card-title">${meal.name}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:10px">
+          <div style="font-family:var(--serif);font-size:18px;color:var(--green)">${meal.macros.protein}g</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted)">${meal.macros.cal} kcal</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">${open?'▲':'▼'}</div>
+        </div>
+      </div>
+      ${body}
+    </div>`;
+  }).join('');
+
+  return `
+    <div class="day-pills">${pills}</div>
+    <div style="padding:14px 16px 0">
+      <div style="font-family:var(--serif);font-size:22px">${selectedDay}</div>
+      <div style="font-size:13px;color:var(--green);margin-top:2px">${m.theme}</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px">${m.totals.cal} kcal · ${m.totals.protein}g protein</div>
+    </div>
+    <div style="padding:6px 0 8px">${cards}</div>`;
+}
+
+// ── WORKOUT ────────────────────────────────────────────────────────────────────
+function renderWorkout() {
+  const w = WORKOUT_PLAN[selectedDay];
+  const ic = INTENSITY_COLOR[w.intensity] || '#9ca3af';
+  let pills = DAYS.map(d=>`<div class="day-pill${d===selectedDay?' active-amber':(d===todayName()?' today-mark':'')}" data-action="dayW" data-day="${d}">${d.slice(0,3)}</div>`).join('');
+
+  let exRows = w.exercises.map((ex,i)=>{
+    const ck = selectedDay+'-'+i;
+    const done = checkedEx[ck];
+    const hasAction = ex.sets > 0;
+    return `<div class="check-row"${hasAction?` data-action="ex" data-key="${ck}"`:''}  style="${!hasAction?'cursor:default;opacity:0.6':''}">
+      <div class="check-circle${done?' amber-done':(hasAction?' num':'')}">
+        ${done?'✓':(hasAction ? i+1 : '—')}
+      </div>
+      <div class="check-main">
+        <div class="check-title${done?' done':''}">${ex.name}</div>
+        ${ex.sets>1?`<div class="check-detail">${ex.sets} sets × ${ex.reps}${ex.rest?' · rest '+ex.rest:''}</div>`:(ex.reps?`<div class="check-detail">${ex.reps}</div>`:'')}
+        ${ex.note?`<div class="check-note">${ex.note}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  return `
+    <div class="day-pills">${pills}</div>
+    <div style="padding:14px 16px 0">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-family:var(--serif);font-size:22px;line-height:1.1">${w.type}</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted2);margin-top:4px">${w.duration} · ${w.location}</div>
+        </div>
+        <div class="intensity-badge" style="color:${ic};border:1px solid ${ic}40;margin-top:4px">${w.intensity}</div>
+      </div>
+      ${w.warmup?`<div class="phase-pill warm" style="margin:10px 0 0">🔥 Warm-up: ${w.warmup}</div>`:''}
+    </div>
+
+    <div class="sec-head"><div class="sec-line"></div><div class="sec-text">EXERCISES</div><div class="sec-line"></div></div>
+    <div class="card">${exRows}</div>
+
+    ${w.cooldown?`<div class="phase-pill cool" style="margin:10px 14px 0">❄️ Cool-down: ${w.cooldown}</div>`:''}
+    ${w.tip?`<div style="margin:10px 14px 0;padding:12px 14px;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);border-radius:10px;font-size:13px;color:#fbbf24;line-height:1.6;font-style:italic">"${w.tip}"</div>`:''}
+    <div style="height:8px"></div>`;
+}
+
+// ── SHOP ───────────────────────────────────────────────────────────────────────
+function renderShop() {
+  const total = Object.values(SHOPPING).flat().length;
+  const done = Object.values(checkedShop).filter(Boolean).length;
+  let html = `
+    <div style="padding:16px 16px 8px">
+      <div style="font-family:var(--serif);font-size:22px">Weekly Shopping List</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px">${done}/${total} items · Liver-healing · Low sodium</div>
+      <div style="margin-top:8px;height:3px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:${total?done/total*100:0}%;background:linear-gradient(90deg,var(--green),var(--green2));border-radius:4px;transition:width 0.4s"></div>
+      </div>
+    </div>`;
+
+  Object.entries(SHOPPING).forEach(([cat, items])=>{
+    html += `<div class="sec-head"><div class="sec-line"></div><div class="sec-text">${cat}</div><div class="sec-line"></div></div>`;
+    items.forEach((item,i)=>{
+      const key = cat+'-'+i;
+      const done = checkedShop[key];
+      html += `<div class="shop-item" data-action="shop" data-key="${key}">
+        <div class="shop-check${done?' done':''}"> ${done?'✓':''}</div>
+        <span class="shop-text${done?' done':''}">${item}</span>
+      </div>`;
+    });
+  });
+  return html;
+}
+
+// ── WEEK ───────────────────────────────────────────────────────────────────────
+function renderWeek() {
+  const today = todayName();
+  const ds = daysSober();
+
+  let rows = DAYS.map(d=>{
+    const w = WORKOUT_PLAN[d];
+    const m = MEAL_PLAN[d];
+    const ic = INTENSITY_COLOR[w.intensity] || '#9ca3af';
+    const isToday = d===today;
+    return `<div class="week-row${isToday?' today':''}" data-action="weekDay" data-day="${d}">
+      <div>
+        <div class="week-day-name">${d}${isToday?' <span style="font-family:var(--mono);font-size:9px;background:var(--green);color:#000;padding:2px 6px;border-radius:8px;vertical-align:middle;margin-left:6px">TODAY</span>':''}</div>
+        <div class="week-theme">${m.theme}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="week-wk" style="color:${ic}">${w.type.split('—')[0].trim()}</div>
+        <div class="week-dur">${w.duration}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `
+    <div style="padding:16px 16px 8px">
+      <div style="font-family:var(--serif);font-size:22px">This Week</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px">Tap any day for full details</div>
+    </div>
+    ${rows}
+    <div class="sober-card">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--green);letter-spacing:0.14em;margin-bottom:6px">SOBRIETY COUNTER</div>
+      <div class="sober-big">${ds}</div>
+      <div class="sober-since">Days sober since October 5, 2025.<br>This is why your labs are improving. Keep going.</div>
+      <div class="sober-stats">
+        <div><div class="sober-stat-val">${Math.floor(ds/7)}</div><div class="sober-stat-lbl">WEEKS</div></div>
+        <div><div class="sober-stat-val">${(ds/30.4).toFixed(1)}</div><div class="sober-stat-lbl">MONTHS</div></div>
+        <div><div class="sober-stat-val">June</div><div class="sober-stat-lbl">NEXT CHECK</div></div>
+      </div>
+    </div>
+    <div style="height:8px"></div>`;
+}
+
+// ─── EVENT DELEGATION ─────────────────────────────────────────────────────────
+function attachHandlers() {
+  document.getElementById('scroll').addEventListener('click', function(e) {
+    const el = e.target.closest('[data-action]');
+    if (!el) return;
+    const action = el.dataset.action;
+
+    if (action === 'meal') {
+      checkedMeals[el.dataset.key] = !checkedMeals[el.dataset.key];
+      save(); render();
+    } else if (action === 'ex') {
+      checkedEx[el.dataset.key] = !checkedEx[el.dataset.key];
+      save(); render();
+    } else if (action === 'shop') {
+      checkedShop[el.dataset.key] = !checkedShop[el.dataset.key];
+      save(); render();
+    } else if (action === 'toggleMeal') {
+      expandedMeal = expandedMeal === el.dataset.meal ? null : el.dataset.meal;
+      render();
+    } else if (action === 'dayM' || action === 'dayW') {
+      selectedDay = el.dataset.day;
+      expandedMeal = null;
+      render();
+    } else if (action === 'weekDay') {
+      selectedDay = el.dataset.day;
+      switchTab('today');
+    }
+  }, {passive:true});
+}
+
+// ─── TAB SWITCHING ────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  expandedMeal = null;
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.remove('active','amber');
+    if (b.dataset.tab === tab) {
+      b.classList.add('active');
+      if (tab === 'workout') b.classList.add('amber');
+    }
+  });
+  render();
+}
+
+// ─── PWA INSTALL ─────────────────────────────────────────────────────────────
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (!localStorage.getItem('installDismissed')) {
+    document.getElementById('install-banner').classList.add('show');
+  }
+});
+
+function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => {
+    deferredPrompt = null;
+    document.getElementById('install-banner').classList.remove('show');
+  });
+}
+
+function dismissInstall() {
+  localStorage.setItem('installDismissed', '1');
+  document.getElementById('install-banner').classList.remove('show');
+}
+
+// ─── SERVICE WORKER ───────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>

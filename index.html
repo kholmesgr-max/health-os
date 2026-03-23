@@ -1299,6 +1299,52 @@ document.addEventListener('click', function(e) {
   }
 });
 
+// ── FLEX / GOLF HOME PROGRAM ──────────────────────────────────────────────────
+function renderFlex() {
+  const today = new Date().toISOString().split('T')[0];
+  const todayLog = flexLog[today] || '';
+  const cats = Object.entries(FLEX_PROGRAM);
+
+  const catCards = cats.map(([key, cat]) => {
+    const routines = cat.routines.map(r => `
+      <div class="flex-routine">
+        <div class="flex-routine-name" style="color:${cat.color}">${r.name}</div>
+        <div class="flex-routine-dur">${r.duration.toUpperCase()}</div>
+        <div class="flex-routine-instruction">${r.instruction}</div>
+      </div>`).join('');
+    return `<div class="flex-category">
+      <div class="flex-cat-header" data-action="toggleFlex" data-flex="${key}">
+        <div class="flex-cat-icon">${cat.icon}</div>
+        <div style="flex:1">
+          <div class="flex-cat-title">${cat.title}</div>
+          <div class="flex-cat-dur">${cat.duration} · ${cat.routines.length} exercises</div>
+        </div>
+        <div class="flex-cat-arrow" id="flex-arrow-${key}">▼</div>
+      </div>
+      <div class="flex-cat-body" id="flex-body-${key}" style="display:none">
+        <div style="padding:10px 16px;font-size:12px;color:var(--muted2);line-height:1.5;border-bottom:1px solid var(--border)">${cat.description}</div>
+        ${routines}
+      </div>
+    </div>`;
+  }).join('');
+
+  return `
+    <div style="padding:16px 16px 0">
+      <div style="font-family:var(--serif);font-size:22px">Golf Flex & Home</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px">Yoga · Mobility · Breathing · Balance</div>
+    </div>
+    <div style="margin:10px 14px 0;padding:12px 14px;background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);border-radius:12px;font-size:13px;color:var(--muted2);line-height:1.55">
+      💡 <strong style="color:var(--text)">Even 10 min counts:</strong> Hip mobility + 5 min box breathing before a round is measurably better than nothing. Tap any category for full instructions.
+    </div>
+    ${catCards}
+    <div class="flex-log-area">
+      <div class="flex-log-label">LOG WHAT YOU DID TODAY</div>
+      <textarea class="log-input" rows="3" placeholder="e.g. 10 min hip mobility, 5 min box breathing..." onblur="saveFlexLog('${today}',this.value)">${todayLog}</textarea>
+      ${todayLog ? `<div style="font-family:var(--mono);font-size:9px;color:var(--green);margin-top:4px">✓ Logged for today</div>` : ''}
+    </div>
+    <div style="height:16px"></div>`;
+}
+
 // ── PROGRESS ───────────────────────────────────────────────────────────────────
 function renderProgress() {
   const sorted = [...progressPhotos].sort((a,b) => new Date(b.date) - new Date(a.date));

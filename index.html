@@ -86,15 +86,15 @@
     background:rgba(0,0,0,0.4); border-bottom:1px solid var(--border);
   }
   .nav-btn {
-    flex:1; padding:11px 2px; background:none; border:none; cursor:pointer;
-    font-family:var(--mono); font-size:10px; letter-spacing:0.06em;
+    flex:1; padding:10px 2px 8px; background:none; border:none; cursor:pointer;
+    font-family:var(--mono); font-size:8px; letter-spacing:0.04em;
     color:var(--muted); border-bottom:2px solid transparent;
     transition:color 0.2s, border-color 0.2s;
-    display:flex; flex-direction:column; align-items:center; gap:3px;
+    display:flex; flex-direction:column; align-items:center; gap:2px;
   }
   .nav-btn.active { color:var(--green); border-bottom-color:var(--green); }
   .nav-btn.active.amber { color:var(--amber); border-bottom-color:var(--amber); }
-  .nav-btn .nav-icon { font-size:16px; line-height:1; }
+  .nav-btn .nav-icon { font-size:20px; line-height:1; }
 
   /* ── SCROLL AREA ── */
   #scroll {
@@ -271,6 +271,68 @@
   .phase-pill.warm { background:rgba(16,185,129,0.07); color:#6ee7b7; }
   .phase-pill.cool { background:rgba(96,165,250,0.07); color:#93c5fd; }
 
+  /* ── PROGRESS PHOTOS ── */
+  .photo-capture-btn {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    margin:14px 14px 0; padding:22px; border-radius:16px; cursor:pointer;
+    background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(52,211,153,0.05));
+    border:2px dashed rgba(16,185,129,0.35); gap:8px;
+    transition:background 0.2s;
+  }
+  .photo-capture-btn:active { background:rgba(16,185,129,0.15); }
+  .photo-capture-icon { font-size:36px; line-height:1; }
+  .photo-capture-label { font-family:var(--mono); font-size:11px; color:var(--green); letter-spacing:0.12em; }
+  .photo-capture-sub { font-size:12px; color:var(--muted); text-align:center; }
+
+  .photo-entry {
+    margin:10px 14px 0; border-radius:14px; overflow:hidden;
+    border:1px solid var(--border); background:var(--surface);
+    cursor:pointer; transition:border-color 0.2s;
+  }
+  .photo-entry:active { border-color:rgba(16,185,129,0.3); }
+  .photo-thumb { width:100%; height:220px; object-fit:cover; display:block; }
+  .photo-meta { padding:12px 14px; }
+  .photo-date { font-family:var(--mono); font-size:9px; color:var(--green); letter-spacing:0.12em; margin-bottom:4px; }
+  .photo-weight { font-family:var(--serif); font-size:20px; color:var(--text); }
+  .photo-sober { font-family:var(--mono); font-size:10px; color:var(--muted2); margin-top:2px; }
+  .photo-note-text { font-size:12px; color:var(--muted2); margin-top:6px; line-height:1.4; font-style:italic; }
+
+  .photo-empty {
+    margin:40px 14px; text-align:center; padding:40px 20px;
+    border:1px dashed rgba(255,255,255,0.1); border-radius:16px;
+  }
+  .photo-empty-icon { font-size:48px; margin-bottom:12px; }
+  .photo-empty-title { font-family:var(--serif); font-size:20px; margin-bottom:6px; }
+  .photo-empty-sub { font-size:13px; color:var(--muted); line-height:1.5; }
+
+  /* add entry form */
+  .photo-form {
+    display:none; position:fixed; inset:0; z-index:150;
+    background:rgba(8,13,26,0.97); flex-direction:column;
+    max-width:480px; margin:0 auto;
+    padding:calc(env(safe-area-inset-top,0px)+16px) 18px 20px;
+    overflow-y:auto;
+  }
+  .photo-form.open { display:flex; }
+  .pf-label { font-family:var(--mono); font-size:9px; color:var(--green); letter-spacing:0.12em; margin-bottom:6px; }
+  .pf-input {
+    width:100%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
+    border-radius:10px; padding:12px 14px; color:var(--text);
+    font-family:var(--sans); font-size:15px; outline:none; margin-bottom:14px;
+  }
+  .pf-input:focus { border-color:rgba(16,185,129,0.4); }
+  .pf-preview { width:100%; max-height:260px; object-fit:cover; border-radius:12px; margin-bottom:14px; display:none; }
+  .pf-save-btn {
+    width:100%; padding:14px; background:var(--green); color:#000;
+    border:none; border-radius:12px; font-family:var(--mono); font-size:13px;
+    font-weight:700; cursor:pointer; letter-spacing:0.06em; margin-top:4px;
+  }
+  .pf-cancel-btn {
+    width:100%; padding:12px; background:none; color:var(--muted);
+    border:1px solid var(--border); border-radius:12px; font-family:var(--mono);
+    font-size:12px; cursor:pointer; margin-top:8px;
+  }
+
   /* animations */
   @keyframes fadeUp {
     from { opacity:0; transform:translateY(6px); }
@@ -335,9 +397,28 @@
     <button class="nav-btn" data-tab="week" onclick="switchTab('week')">
       <span class="nav-icon">📅</span>WEEK
     </button>
+    <button class="nav-btn" data-tab="progress" onclick="switchTab('progress')">
+      <span class="nav-icon">📸</span>PHOTOS
+    </button>
   </div>
 
   <div id="scroll"></div>
+</div>
+
+<input type="file" id="camera-input" accept="image/*" capture="user" style="display:none"/>
+
+<!-- Photo detail modal -->
+<div id="photo-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.95);flex-direction:column;max-width:480px;margin:0 auto;">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:calc(env(safe-area-inset-top,0px)+14px) 18px 14px;flex-shrink:0">
+    <button onclick="closePhotoModal()" style="background:none;border:none;color:var(--muted2);font-size:15px;cursor:pointer;font-family:var(--mono);">✕ CLOSE</button>
+    <button id="modal-delete-btn" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#ef4444;font-family:var(--mono);font-size:10px;padding:6px 12px;border-radius:8px;cursor:pointer;">DELETE</button>
+  </div>
+  <img id="modal-img" style="width:100%;max-height:55vh;object-fit:contain;flex-shrink:0;"/>
+  <div style="padding:16px 18px;flex:1;overflow-y:auto">
+    <div id="modal-date" style="font-family:var(--mono);font-size:10px;color:var(--green);letter-spacing:0.12em;margin-bottom:6px"></div>
+    <div id="modal-meta" style="font-family:var(--serif);font-size:20px;margin-bottom:10px"></div>
+    <div id="modal-note" style="font-size:13px;color:var(--muted2);line-height:1.5;white-space:pre-wrap"></div>
+  </div>
 </div>
 
 <div id="install-banner">
@@ -634,6 +715,15 @@ let checkedShop = JSON.parse(localStorage.getItem('checkedShop') || '{}');
 let expandedMeal = null;
 let deferredPrompt = null;
 
+// ─── PHOTO STATE ──────────────────────────────────────────────────────────────
+let progressPhotos = JSON.parse(localStorage.getItem('progressPhotos') || '[]');
+// Each entry: { id, dataUrl, date, weight, note, daysSober }
+let pendingPhotoDataUrl = null;
+
+function savePhotos() {
+  localStorage.setItem('progressPhotos', JSON.stringify(progressPhotos));
+}
+
 function save() {
   localStorage.setItem('checkedMeals', JSON.stringify(checkedMeals));
   localStorage.setItem('checkedEx', JSON.stringify(checkedEx));
@@ -677,15 +767,15 @@ function updateHeader() {
 }
 
 // ─── RENDER ───────────────────────────────────────────────────────────────────
+// Full render — only called on tab/day switches, never on checkbox taps
 let _renderPending = false;
-function render() {
+function render(animate) {
   if (_renderPending) return;
   _renderPending = true;
   requestAnimationFrame(() => {
     _renderPending = false;
     updateHeader();
     const scroll = document.getElementById('scroll');
-    const prevScroll = scroll.scrollTop;
 
     let html = '';
     if (currentTab === 'today') html = renderToday();
@@ -693,21 +783,73 @@ function render() {
     else if (currentTab === 'workout') html = renderWorkout();
     else if (currentTab === 'shop') html = renderShop();
     else if (currentTab === 'week') html = renderWeek();
+    else if (currentTab === 'progress') html = renderProgress();
 
-    // Only update DOM if content actually changed
-    if (scroll.dataset.lastHtml === html) return;
-    scroll.dataset.lastHtml = html;
-    scroll.innerHTML = (_preserveScroll ? '<div class="no-anim">' : '<div class="fade-up">') + html + '</div>';
-    // Preserve scroll position for shop/meals browsing, reset for tab switches
-    if (_preserveScroll) { scroll.scrollTop = prevScroll; _preserveScroll = false; }
-    else scroll.scrollTop = 0;
+    scroll.innerHTML = (animate !== false ? '<div class="fade-up">' : '<div class="no-anim">') + html + '</div>';
+    scroll.scrollTop = 0;
   });
 }
 
-let _preserveScroll = false;
-function renderInPlace() {
-  _preserveScroll = true;
-  render();
+// ─── DIRECT DOM UPDATES (zero rerender — instant on phone) ────────────────────
+function toggleMealDom(key) {
+  const val = checkedMeals[key];
+  // Update circle
+  const circle = document.querySelector(`.check-circle[data-meal-key="${key}"]`);
+  if (circle) {
+    circle.className = 'check-circle' + (val ? ' done' : '');
+    circle.textContent = val ? '✓' : '';
+  }
+  // Update title strikethrough
+  const title = document.querySelector(`.check-title[data-meal-key="${key}"]`);
+  if (title) title.className = 'check-title' + (val ? ' done' : '');
+  // Update header progress
+  updateHeader();
+}
+
+function toggleExDom(key, idx) {
+  const val = checkedEx[key];
+  const circle = document.querySelector(`.check-circle[data-ex-key="${key}"]`);
+  if (circle) {
+    circle.className = 'check-circle' + (val ? ' amber-done' : ' num');
+    circle.textContent = val ? '✓' : String(idx + 1);
+  }
+  const title = document.querySelector(`.check-title[data-ex-key="${key}"]`);
+  if (title) title.className = 'check-title' + (val ? ' done' : '');
+  updateHeader();
+}
+
+function toggleShopDom(key) {
+  const val = checkedShop[key];
+  const box = document.querySelector(`.shop-check[data-shop-key="${key}"]`);
+  if (box) { box.className = 'shop-check' + (val ? ' done' : ''); box.textContent = val ? '✓' : ''; }
+  const txt = document.querySelector(`.shop-text[data-shop-key="${key}"]`);
+  if (txt) txt.className = 'shop-text' + (val ? ' done' : '');
+  // Update progress bar
+  const total = Object.values(SHOPPING).flat().length;
+  const done = Object.values(checkedShop).filter(Boolean).length;
+  const bar = document.getElementById('shop-prog-bar');
+  const lbl = document.getElementById('shop-prog-label');
+  if (bar) bar.style.width = (done/total*100)+'%';
+  if (lbl) lbl.textContent = `${done}/${total} items · Liver-healing · Low sodium`;
+}
+
+function toggleMealExpandDom(mealKey) {
+  const body = document.getElementById('meal-body-' + mealKey);
+  const arrow = document.getElementById('meal-arrow-' + mealKey);
+  if (!body) return;
+  const isOpen = body.style.display !== 'none' && body.style.display !== '';
+  if (isOpen) {
+    body.style.display = 'none';
+    if (arrow) arrow.textContent = '▼';
+    expandedMeal = null;
+  } else {
+    // Close any other open meal first
+    document.querySelectorAll('.meal-body').forEach(el => { el.style.display = 'none'; });
+    document.querySelectorAll('.meal-arrow').forEach(el => { el.textContent = '▼'; });
+    body.style.display = 'block';
+    if (arrow) arrow.textContent = '▲';
+    expandedMeal = mealKey;
+  }
 }
 
 // ── TODAY ──────────────────────────────────────────────────────────────────────
@@ -736,40 +878,35 @@ function renderToday() {
   let mealRows = Object.entries(m.meals).map(([k,meal])=>{
     const ck = today+'-'+k;
     const done = checkedMeals[ck];
-    const open = expandedMeal === k;
-    let body = '';
-    if (open) {
-      const items = meal.items.map(i=>`<div class="ingredient"><span class="dot-green">·</span>${i}</div>`).join('');
-      body = `<div class="card-body">
-        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.12em;margin-bottom:8px">INGREDIENTS</div>
-        ${items}
-        ${meal.note?`<div style="margin-top:10px;padding:8px 12px;background:rgba(245,158,11,0.08);border-radius:8px;font-size:12px;color:#fbbf24;line-height:1.5">⚡ ${meal.note}</div>`:''}
-      </div>`;
-    }
+    const items = meal.items.map(i=>`<div class="ingredient"><span class="dot-green">·</span>${i}</div>`).join('');
+    const noteHtml = meal.note?`<div style="margin-top:10px;padding:8px 12px;background:rgba(245,158,11,0.08);border-radius:8px;font-size:12px;color:#fbbf24;line-height:1.5">⚡ ${meal.note}</div>`:'';
     return `<div style="border-bottom:1px solid var(--border)">
       <div style="display:flex;align-items:center;gap:11px;padding:11px 15px;cursor:pointer" data-action="toggleMeal" data-meal="${k}">
-        <div class="check-circle${done?' done':''}" data-action="meal" data-key="${ck}" style="flex-shrink:0">${done?'✓':''}</div>
-        <div class="check-main" style="pointer-events:none">
-          <div class="check-title${done?' done':''}">${meal.name}</div>
+        <div class="check-circle${done?' done':''}" data-meal-key="${ck}" style="flex-shrink:0;width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;font-size:11px">${done?'✓':''}</div>
+        <div class="check-main" style="pointer-events:none;flex:1">
+          <div class="check-title${done?' done':''}" data-meal-key="${ck}">${meal.name}</div>
           <div class="check-detail">${meal.eyebrow} · ${meal.time} · ${meal.macros.protein}g protein</div>
         </div>
-        <div style="font-size:11px;color:var(--muted);pointer-events:none">${open?'▲':'▼'}</div>
+        <div class="meal-arrow" id="meal-arrow-${k}" style="font-size:11px;color:var(--muted);pointer-events:none">▼</div>
       </div>
-      ${body}
+      <div class="meal-body card-body" id="meal-body-${k}" style="display:none;border-top:1px solid var(--border);padding:12px 15px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.12em;margin-bottom:8px">INGREDIENTS</div>
+        ${items}${noteHtml}
+      </div>
     </div>`;
   }).join('');
 
   let exRows = w.exercises.slice(0,3).map((ex,i)=>{
     const ck = today+'-'+i;
     const done = checkedEx[ck];
-    return `<div class="check-row" data-action="ex" data-key="${ck}">
-      <div class="check-circle${done?' amber-done':' num'}">${done?'✓':i+1}</div>
-      <div class="check-main">
-        <div class="check-title${done?' done':''}">${ex.name}</div>
+    return `<div class="check-row" data-action="ex" data-key="${ck}" data-idx="${i}">
+      <div class="check-circle${done?' amber-done':' num'}" data-ex-key="${ck}">${done?'✓':i+1}</div>
+      <div class="check-main" style="pointer-events:none">
+        <div class="check-title${done?' done':''}" data-ex-key="${ck}">${ex.name}</div>
         ${ex.sets>1?`<div class="check-detail">${ex.sets} × ${ex.reps}${ex.rest?' · rest '+ex.rest:''}</div>`:''}
       </div>
     </div>`;
-  }).join('') + (w.exercises.length>3?`<div style="padding:8px 15px;font-family:var(--mono);font-size:10px;color:var(--muted)">+ ${w.exercises.length-3} more exercises → Workout tab</div>`:'');
+  }).join('') + (w.exercises.length>3?`<div style="padding:8px 15px;font-family:var(--mono);font-size:10px;color:var(--muted)">+ ${w.exercises.length-3} more → Workout tab</div>`:'');
 
   return `
     <div style="padding-bottom:8px">
@@ -807,23 +944,14 @@ function renderMeals() {
   let pills = DAYS.map(d=>`<div class="day-pill${d===selectedDay?' active-green':(d===todayName()?' today-mark':'')}" data-action="dayM" data-day="${d}">${d.slice(0,3)}</div>`).join('');
 
   let cards = Object.entries(m.meals).map(([k,meal])=>{
-    const open = expandedMeal===k;
-    let body = '';
-    if (open) {
-      const items = meal.items.map(i=>`<div class="ingredient"><span class="dot-green">·</span>${i}</div>`).join('');
-      const macroChips = [
-        {l:'Protein',v:meal.macros.protein+'g',c:'var(--green)'},
-        {l:'Carbs',v:meal.macros.carbs+'g',c:'var(--amber)'},
-        {l:'Fat',v:meal.macros.fat+'g',c:'var(--blue)'},
-        {l:'Calories',v:meal.macros.cal,c:'var(--muted2)'},
-      ].map(x=>`<div class="macro-chip"><div class="macro-val" style="color:${x.c}">${x.v}</div><div class="macro-lbl">${x.l}</div></div>`).join('');
-      body = `<div class="card-body">
-        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.12em;margin-bottom:8px">INGREDIENTS</div>
-        ${items}
-        <div class="macro-row">${macroChips}</div>
-        ${meal.note?`<div style="margin-top:10px;padding:8px 12px;background:rgba(245,158,11,0.08);border-radius:8px;font-size:12px;color:#fbbf24;line-height:1.5">⚡ ${meal.note}</div>`:''}
-      </div>`;
-    }
+    const items = meal.items.map(i=>`<div class="ingredient"><span class="dot-green">·</span>${i}</div>`).join('');
+    const macroChips = [
+      {l:'Protein',v:meal.macros.protein+'g',c:'var(--green)'},
+      {l:'Carbs',v:meal.macros.carbs+'g',c:'var(--amber)'},
+      {l:'Fat',v:meal.macros.fat+'g',c:'var(--blue)'},
+      {l:'Calories',v:meal.macros.cal,c:'var(--muted2)'},
+    ].map(x=>`<div class="macro-chip"><div class="macro-val" style="color:${x.c}">${x.v}</div><div class="macro-lbl">${x.l}</div></div>`).join('');
+    const noteHtml = meal.note?`<div style="margin-top:10px;padding:8px 12px;background:rgba(245,158,11,0.08);border-radius:8px;font-size:12px;color:#fbbf24;line-height:1.5">⚡ ${meal.note}</div>`:'';
     return `<div class="card">
       <div class="card-header" data-action="toggleMeal" data-meal="${k}">
         <div>
@@ -833,10 +961,15 @@ function renderMeals() {
         <div style="text-align:right;flex-shrink:0;margin-left:10px">
           <div style="font-family:var(--serif);font-size:18px;color:var(--green)">${meal.macros.protein}g</div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--muted)">${meal.macros.cal} kcal</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">${open?'▲':'▼'}</div>
+          <div class="meal-arrow" id="meal-arrow-${k}" style="font-size:11px;color:var(--muted);margin-top:4px">▼</div>
         </div>
       </div>
-      ${body}
+      <div class="meal-body card-body" id="meal-body-${k}" style="display:none;border-top:1px solid var(--border)">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.12em;margin-bottom:8px">INGREDIENTS</div>
+        ${items}
+        <div class="macro-row">${macroChips}</div>
+        ${noteHtml}
+      </div>
     </div>`;
   }).join('');
 
@@ -860,12 +993,10 @@ function renderWorkout() {
     const ck = selectedDay+'-'+i;
     const done = checkedEx[ck];
     const hasAction = ex.sets > 0;
-    return `<div class="check-row"${hasAction?` data-action="ex" data-key="${ck}"`:''}  style="${!hasAction?'cursor:default;opacity:0.6':''}">
-      <div class="check-circle${done?' amber-done':(hasAction?' num':'')}">
-        ${done?'✓':(hasAction ? i+1 : '—')}
-      </div>
-      <div class="check-main">
-        <div class="check-title${done?' done':''}">${ex.name}</div>
+    return `<div class="check-row"${hasAction?` data-action="ex" data-key="${ck}" data-idx="${i}"`:''}  style="${!hasAction?'cursor:default;opacity:0.6':''}">
+      <div class="check-circle${done?' amber-done':(hasAction?' num':'')}" ${hasAction?`data-ex-key="${ck}"`:''}>${done?'✓':(hasAction ? i+1 : '—')}</div>
+      <div class="check-main" style="pointer-events:none">
+        <div class="check-title${done?' done':''}" ${hasAction?`data-ex-key="${ck}"`:''}>${ex.name}</div>
         ${ex.sets>1?`<div class="check-detail">${ex.sets} sets × ${ex.reps}${ex.rest?' · rest '+ex.rest:''}</div>`:(ex.reps?`<div class="check-detail">${ex.reps}</div>`:'')}
         ${ex.note?`<div class="check-note">${ex.note}</div>`:''}
       </div>
@@ -900,9 +1031,9 @@ function renderShop() {
   let html = `
     <div style="padding:16px 16px 8px">
       <div style="font-family:var(--serif);font-size:22px">Weekly Shopping List</div>
-      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px">${done}/${total} items · Liver-healing · Low sodium</div>
+      <div id="shop-prog-label" style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px">${done}/${total} items · Liver-healing · Low sodium</div>
       <div style="margin-top:8px;height:3px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden">
-        <div style="height:100%;width:${total?done/total*100:0}%;background:linear-gradient(90deg,var(--green),var(--green2));border-radius:4px;transition:width 0.4s"></div>
+        <div id="shop-prog-bar" style="height:100%;width:${total?done/total*100:0}%;background:linear-gradient(90deg,var(--green),var(--green2));border-radius:4px;transition:width 0.4s"></div>
       </div>
     </div>`;
 
@@ -910,10 +1041,10 @@ function renderShop() {
     html += `<div class="sec-head"><div class="sec-line"></div><div class="sec-text">${cat}</div><div class="sec-line"></div></div>`;
     items.forEach((item,i)=>{
       const key = cat+'-'+i;
-      const done = checkedShop[key];
+      const d = checkedShop[key];
       html += `<div class="shop-item" data-action="shop" data-key="${key}">
-        <div class="shop-check${done?' done':''}"> ${done?'✓':''}</div>
-        <span class="shop-text${done?' done':''}">${item}</span>
+        <div class="shop-check${d?' done':''}" data-shop-key="${key}">${d?'✓':''}</div>
+        <span class="shop-text${d?' done':''}" data-shop-key="${key}">${item}</span>
       </div>`;
     });
   });
@@ -962,49 +1093,187 @@ function renderWeek() {
 }
 
 // ─── EVENT DELEGATION ─────────────────────────────────────────────────────────
-function attachHandlers() {
-  // no-op: all clicks handled by the single persistent listener below
-}
+function attachHandlers() { /* no-op — single persistent listener below */ }
 
-// Single persistent click handler — attached once at startup
 document.addEventListener('click', function(e) {
   const el = e.target.closest('[data-action]');
   if (!el) return;
-  const scroll = document.getElementById('scroll');
-  const nav = document.getElementById('nav');
-  if (!scroll.contains(el) && !nav.contains(el)) return;
   const action = el.dataset.action;
 
-  // Instant visual feedback — toggle classes directly before re-render
   if (action === 'meal') {
+    // Checkbox tap — zero rerender, direct DOM only
     const key = el.dataset.key;
     checkedMeals[key] = !checkedMeals[key];
-    // Update just the circle instantly
-    const circle = el.querySelector('.check-circle') || el.closest('.check-row, [data-action="toggleMeal"]')?.querySelector('.check-circle');
-    if (circle) { circle.className = 'check-circle' + (checkedMeals[key] ? ' done' : ''); circle.textContent = checkedMeals[key] ? '✓' : ''; }
-    save(); renderInPlace();
+    save();
+    toggleMealDom(key);
+
   } else if (action === 'ex') {
     const key = el.dataset.key;
+    const idx = parseInt(el.dataset.idx || '0');
     checkedEx[key] = !checkedEx[key];
-    const circle = el.querySelector('.check-circle') || el.closest('[data-action="ex"]')?.querySelector('.check-circle');
-    if (circle) { circle.className = 'check-circle' + (checkedEx[key] ? ' amber-done' : ' num'); circle.textContent = checkedEx[key] ? '✓' : (circle.textContent || ''); }
-    save(); renderInPlace();
+    save();
+    toggleExDom(key, idx);
+
   } else if (action === 'shop') {
     const key = el.dataset.key;
     checkedShop[key] = !checkedShop[key];
-    save(); renderInPlace();
+    save();
+    toggleShopDom(key);
+
   } else if (action === 'toggleMeal') {
-    expandedMeal = expandedMeal === el.dataset.meal ? null : el.dataset.meal;
-    renderInPlace();
+    toggleMealExpandDom(el.dataset.meal);
+
   } else if (action === 'dayM' || action === 'dayW') {
     selectedDay = el.dataset.day;
     expandedMeal = null;
-    render();
+    render(false);
+
   } else if (action === 'weekDay') {
     selectedDay = el.dataset.day;
     switchTab('today');
+  } else if (action === 'openPhoto') {
+    openPhotoModal(el.dataset.id);
   }
 });
+
+// ── PROGRESS ───────────────────────────────────────────────────────────────────
+function renderProgress() {
+  const sorted = [...progressPhotos].sort((a,b) => new Date(b.date) - new Date(a.date));
+  const count = sorted.length;
+
+  let timelineHTML = '';
+  if (count === 0) {
+    timelineHTML = `<div class="photo-empty">
+      <div class="photo-empty-icon">📸</div>
+      <div class="photo-empty-title">No photos yet</div>
+      <div class="photo-empty-sub">Tap the button above to take your first progress photo. One photo a week tells your whole story.</div>
+    </div>`;
+  } else {
+    timelineHTML = sorted.map((p, i) => {
+      const d = new Date(p.date);
+      const dateStr = d.toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'});
+      const weekNum = count - i;
+      return `<div class="photo-entry" data-action="openPhoto" data-id="${p.id}">
+        <img class="photo-thumb" src="${p.dataUrl}" loading="lazy"/>
+        <div class="photo-meta">
+          <div class="photo-date">WEEK ${weekNum} · ${dateStr.toUpperCase()}</div>
+          <div class="photo-weight">${p.weight ? p.weight + ' lbs' : 'Weight not recorded'}</div>
+          <div class="photo-sober">Day ${p.daysSober} sober</div>
+          ${p.note ? `<div class="photo-note-text">"${p.note}"</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  return `
+    <div style="padding:16px 16px 0">
+      <div style="font-family:var(--serif);font-size:22px">Progress Photos</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px">${count} photo${count!==1?'s':''} · Waist up · Weekly</div>
+    </div>
+    <div class="photo-capture-btn" onclick="openCamera()">
+      <div class="photo-capture-icon">📷</div>
+      <div class="photo-capture-label">TAKE THIS WEEK'S PHOTO</div>
+      <div class="photo-capture-sub">Opens your camera directly</div>
+    </div>
+    ${timelineHTML}
+    <div style="height:16px"></div>`;
+}
+
+// ─── CAMERA & PHOTO FORM ─────────────────────────────────────────────────────
+function openCamera() {
+  document.getElementById('camera-input').click();
+}
+
+document.getElementById('camera-input').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    pendingPhotoDataUrl = ev.target.result;
+    openPhotoForm();
+  };
+  reader.readAsDataURL(file);
+  this.value = ''; // reset so same file can be re-selected
+});
+
+function openPhotoForm() {
+  const form = document.getElementById('photo-form');
+  const preview = document.getElementById('pf-preview');
+  const weightInput = document.getElementById('pf-weight');
+  const noteInput = document.getElementById('pf-note');
+  const dateInput = document.getElementById('pf-date');
+
+  // Set today's date
+  const today = new Date();
+  dateInput.value = today.toISOString().split('T')[0];
+  weightInput.value = '';
+  noteInput.value = '';
+  preview.src = pendingPhotoDataUrl;
+  preview.style.display = 'block';
+  form.classList.add('open');
+}
+
+function closePhotoForm() {
+  document.getElementById('photo-form').classList.remove('open');
+  pendingPhotoDataUrl = null;
+}
+
+function savePhoto() {
+  if (!pendingPhotoDataUrl) return;
+  const weight = document.getElementById('pf-weight').value.trim();
+  const note = document.getElementById('pf-note').value.trim();
+  const dateVal = document.getElementById('pf-date').value;
+  const entryDate = dateVal ? new Date(dateVal + 'T12:00:00') : new Date();
+
+  const entry = {
+    id: Date.now().toString(),
+    dataUrl: pendingPhotoDataUrl,
+    date: entryDate.toISOString(),
+    weight: weight,
+    note: note,
+    daysSober: daysSober()
+  };
+
+  progressPhotos.push(entry);
+  savePhotos();
+  closePhotoForm();
+  render(false);
+}
+
+// ─── PHOTO MODAL ─────────────────────────────────────────────────────────────
+let modalPhotoId = null;
+
+function openPhotoModal(id) {
+  const photo = progressPhotos.find(p => p.id === id);
+  if (!photo) return;
+  modalPhotoId = id;
+
+  const d = new Date(photo.date);
+  const dateStr = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+  document.getElementById('modal-img').src = photo.dataUrl;
+  document.getElementById('modal-date').textContent = dateStr.toUpperCase() + ' · DAY ' + photo.daysSober + ' SOBER';
+  document.getElementById('modal-meta').textContent = photo.weight ? photo.weight + ' lbs' : 'Weight not recorded';
+  document.getElementById('modal-note').textContent = photo.note || '';
+  document.getElementById('modal-delete-btn').onclick = deletePhoto;
+
+  const modal = document.getElementById('photo-modal');
+  modal.style.display = 'flex';
+}
+
+function closePhotoModal() {
+  document.getElementById('photo-modal').style.display = 'none';
+  modalPhotoId = null;
+}
+
+function deletePhoto() {
+  if (!modalPhotoId) return;
+  if (!confirm('Delete this progress photo?')) return;
+  progressPhotos = progressPhotos.filter(p => p.id !== modalPhotoId);
+  savePhotos();
+  closePhotoModal();
+  render(false);
+}
 
 // ─── TAB SWITCHING ────────────────────────────────────────────────────────────
 function switchTab(tab) {
@@ -1053,5 +1322,22 @@ if ('serviceWorker' in navigator) {
 // ─── INIT ────────────────────────────────────────────────────────────────────
 render();
 </script>
+<!-- Photo entry form -->
+<div id="photo-form" class="photo-form">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-shrink:0">
+    <div style="font-family:var(--serif);font-size:22px">New Progress Photo</div>
+    <button onclick="closePhotoForm()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:4px">✕</button>
+  </div>
+  <img id="pf-preview" class="pf-preview"/>
+  <div class="pf-label">DATE</div>
+  <input id="pf-date" type="date" class="pf-input" style="color-scheme:dark"/>
+  <div class="pf-label">WEIGHT (LBS)</div>
+  <input id="pf-weight" type="number" class="pf-input" placeholder="e.g. 213" inputmode="decimal"/>
+  <div class="pf-label">NOTE (OPTIONAL)</div>
+  <textarea id="pf-note" class="pf-input" rows="3" placeholder="How are you feeling? Any wins this week?" style="resize:none;font-size:14px;line-height:1.5"></textarea>
+  <button class="pf-save-btn" onclick="savePhoto()">SAVE PHOTO</button>
+  <button class="pf-cancel-btn" onclick="closePhotoForm()">Cancel</button>
+</div>
+
 </body>
 </html>

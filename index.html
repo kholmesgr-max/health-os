@@ -273,10 +273,11 @@
 
   /* animations */
   @keyframes fadeUp {
-    from { opacity:0; transform:translateY(10px); }
+    from { opacity:0; transform:translateY(6px); }
     to   { opacity:1; transform:translateY(0); }
   }
-  .fade-up { animation:fadeUp 0.3s ease forwards; }
+  .fade-up { animation:fadeUp 0.15s ease forwards; }
+  .no-anim { animation:none; }
 
   /* install banner */
   #install-banner {
@@ -676,23 +677,37 @@ function updateHeader() {
 }
 
 // ─── RENDER ───────────────────────────────────────────────────────────────────
+let _renderPending = false;
 function render() {
-  updateHeader();
-  const scroll = document.getElementById('scroll');
-  scroll.innerHTML = '';
-  scroll.scrollTop = 0;
+  if (_renderPending) return;
+  _renderPending = true;
+  requestAnimationFrame(() => {
+    _renderPending = false;
+    updateHeader();
+    const scroll = document.getElementById('scroll');
+    const prevScroll = scroll.scrollTop;
 
-  const div = document.createElement('div');
-  div.className = 'fade-up';
+    let html = '';
+    if (currentTab === 'today') html = renderToday();
+    else if (currentTab === 'meals') html = renderMeals();
+    else if (currentTab === 'workout') html = renderWorkout();
+    else if (currentTab === 'shop') html = renderShop();
+    else if (currentTab === 'week') html = renderWeek();
 
-  if (currentTab === 'today') div.innerHTML = renderToday();
-  else if (currentTab === 'meals') div.innerHTML = renderMeals();
-  else if (currentTab === 'workout') div.innerHTML = renderWorkout();
-  else if (currentTab === 'shop') div.innerHTML = renderShop();
-  else if (currentTab === 'week') div.innerHTML = renderWeek();
+    // Only update DOM if content actually changed
+    if (scroll.dataset.lastHtml === html) return;
+    scroll.dataset.lastHtml = html;
+    scroll.innerHTML = (_preserveScroll ? '<div class="no-anim">' : '<div class="fade-up">') + html + '</div>';
+    // Preserve scroll position for shop/meals browsing, reset for tab switches
+    if (_preserveScroll) { scroll.scrollTop = prevScroll; _preserveScroll = false; }
+    else scroll.scrollTop = 0;
+  });
+}
 
-  scroll.appendChild(div);
-  attachHandlers();
+let _preserveScroll = false;
+function renderInPlace() {
+  _preserveScroll = true;
+  render();
 }
 
 // ── TODAY ──────────────────────────────────────────────────────────────────────
@@ -955,22 +970,32 @@ function attachHandlers() {
 document.addEventListener('click', function(e) {
   const el = e.target.closest('[data-action]');
   if (!el) return;
-  // Only act on clicks inside the scroll area or nav
-  if (!document.getElementById('scroll').contains(el) && !document.getElementById('nav').contains(el)) return;
+  const scroll = document.getElementById('scroll');
+  const nav = document.getElementById('nav');
+  if (!scroll.contains(el) && !nav.contains(el)) return;
   const action = el.dataset.action;
 
+  // Instant visual feedback — toggle classes directly before re-render
   if (action === 'meal') {
-    checkedMeals[el.dataset.key] = !checkedMeals[el.dataset.key];
-    save(); render();
+    const key = el.dataset.key;
+    checkedMeals[key] = !checkedMeals[key];
+    // Update just the circle instantly
+    const circle = el.querySelector('.check-circle') || el.closest('.check-row, [data-action="toggleMeal"]')?.querySelector('.check-circle');
+    if (circle) { circle.className = 'check-circle' + (checkedMeals[key] ? ' done' : ''); circle.textContent = checkedMeals[key] ? '✓' : ''; }
+    save(); renderInPlace();
   } else if (action === 'ex') {
-    checkedEx[el.dataset.key] = !checkedEx[el.dataset.key];
-    save(); render();
+    const key = el.dataset.key;
+    checkedEx[key] = !checkedEx[key];
+    const circle = el.querySelector('.check-circle') || el.closest('[data-action="ex"]')?.querySelector('.check-circle');
+    if (circle) { circle.className = 'check-circle' + (checkedEx[key] ? ' amber-done' : ' num'); circle.textContent = checkedEx[key] ? '✓' : (circle.textContent || ''); }
+    save(); renderInPlace();
   } else if (action === 'shop') {
-    checkedShop[el.dataset.key] = !checkedShop[el.dataset.key];
-    save(); render();
+    const key = el.dataset.key;
+    checkedShop[key] = !checkedShop[key];
+    save(); renderInPlace();
   } else if (action === 'toggleMeal') {
     expandedMeal = expandedMeal === el.dataset.meal ? null : el.dataset.meal;
-    render();
+    renderInPlace();
   } else if (action === 'dayM' || action === 'dayW') {
     selectedDay = el.dataset.day;
     expandedMeal = null;
